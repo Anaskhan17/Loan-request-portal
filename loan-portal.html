@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LoanVault — Banking Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-900: #0a2e1a;
+    --green-800: #0f4026;
+    --green-700: #155c35;
+    --green-600: #1a7843;
+    --green-500: #22a05b;
+    --green-400: #34c774;
+    --green-100: #d4f5e3;
+    --green-50:  #edfaf3;
+    --white:     #ffffff;
+    --grey-50:   #f7f8f7;
+    --grey-100:  #eff0ef;
+    --grey-200:  #d9dbd9;
+    --grey-400:  #9a9e9a;
+    --grey-600:  #5c615c;
+    --grey-800:  #2a2e2a;
+    --gold:      #c9a84c;
+    --red-500:   #d94040;
+    --red-100:   #fce8e8;
+    --amber-500: #d97706;
+    --amber-100: #fef3c7;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.05);
+    --shadow-md: 0 4px 16px rgba(0,0,0,.09);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,.13);
+    --radius:    10px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--grey-50);
+    color: var(--grey-800);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: 28px; right: 28px; z-index: 9999;
+    background: var(--green-800); color: var(--white);
+    padding: 14px 22px; border-radius: var(--radius);
+    font-size: .875rem; font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    display: flex; align-items: center; gap: 10px;
+    transform: translateY(80px); opacity: 0;
+    transition: transform .35s cubic-bezier(.34,1.56,.64,1), opacity .25s ease;
+    pointer-events: none;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
+  #toast svg { flex-shrink: 0; }
+
+  /* ══════════════════════ LOGIN ══════════════════════ */
+  #loginPage {
+    min-height: 100vh;
+    display: flex;
+    background: linear-gradient(135deg, var(--green-900) 0%, var(--green-700) 60%, var(--green-500) 100%);
+  }
+
+  .login-brand {
+    flex: 1;
+    display: flex; flex-direction: column; justify-content: center; padding: 60px;
+    color: var(--white);
+    position: relative; overflow: hidden;
+  }
+  .login-brand::before {
+    content: '';
+    position: absolute; top: -120px; left: -80px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(255,255,255,.07) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .login-brand::after {
+    content: '';
+    position: absolute; bottom: -80px; right: 60px;
+    width: 340px; height: 340px;
+    background: radial-gradient(circle, rgba(255,255,255,.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .brand-badge {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,.12); backdrop-filter: blur(8px);
+    padding: 8px 16px; border-radius: 100px;
+    font-size: .78rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--green-100); width: fit-content; margin-bottom: 32px;
+  }
+  .brand-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green-400); }
+  .login-brand h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2.2rem, 4vw, 3.4rem); line-height: 1.1;
+    margin-bottom: 20px; position: relative; z-index: 1;
+  }
+  .login-brand p { font-size: 1.05rem; color: rgba(255,255,255,.7); line-height: 1.6; max-width: 380px; position: relative; z-index:1; }
+  .brand-stats { display: flex; gap: 32px; margin-top: 48px; position: relative; z-index: 1; }
+  .stat-item { }
+  .stat-value { font-family: 'DM Serif Display', serif; font-size: 1.8rem; color: var(--green-400); }
+  .stat-label { font-size: .78rem; color: rgba(255,255,255,.55); text-transform: uppercase; letter-spacing: .06em; margin-top: 2px; }
+
+  .login-form-wrap {
+    width: 480px; min-height: 100vh;
+    background: var(--white);
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 60px 52px;
+    box-shadow: -20px 0 60px rgba(0,0,0,.2);
+  }
+  .form-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 40px; }
+  .form-logo-icon {
+    width: 42px; height: 42px; border-radius: 10px;
+    background: var(--green-800); display: flex; align-items: center; justify-content: center;
+  }
+  .form-logo-text { font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--green-900); }
+  .form-logo-sub { font-size: .72rem; color: var(--grey-400); letter-spacing: .06em; text-transform: uppercase; }
+  .login-form-wrap h2 { font-family: 'DM Serif Display', serif; font-size: 1.9rem; color: var(--green-900); margin-bottom: 8px; }
+  .login-subtitle { font-size: .9rem; color: var(--grey-400); margin-bottom: 36px; }
+
+  .field { margin-bottom: 20px; }
+  .field label { display: block; font-size: .8rem; font-weight: 600; color: var(--grey-600); letter-spacing: .04em; text-transform: uppercase; margin-bottom: 8px; }
+  .field input {
+    width: 100%; padding: 13px 16px;
+    border: 1.5px solid var(--grey-200); border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif; font-size: .95rem; color: var(--grey-800);
+    background: var(--grey-50);
+    transition: border-color .2s, background .2s, box-shadow .2s;
+    outline: none;
+  }
+  .field input:focus {
+    border-color: var(--green-500); background: var(--white);
+    box-shadow: 0 0 0 3px rgba(34,160,91,.12);
+  }
+  .field input.error { border-color: var(--red-500); }
+
+  .error-msg { font-size: .82rem; color: var(--red-500); margin-top: 6px; display: none; }
+  .error-msg.show { display: block; }
+
+  .login-hint {
+    background: var(--green-50); border: 1px solid var(--green-100);
+    border-radius: 8px; padding: 12px 16px;
+    font-size: .82rem; color: var(--green-700); margin-bottom: 24px;
+    display: flex; align-items: flex-start; gap: 8px;
+  }
+
+  .btn-primary {
+    width: 100%; padding: 14px;
+    background: var(--green-700); color: var(--white);
+    border: none; border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif; font-size: .95rem; font-weight: 600;
+    cursor: pointer; letter-spacing: .02em;
+    transition: background .2s, transform .15s, box-shadow .2s;
+    box-shadow: 0 4px 14px rgba(21,92,53,.3);
+  }
+  .btn-primary:hover { background: var(--green-800); box-shadow: 0 6px 20px rgba(21,92,53,.4); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+
+  /* ══════════════════════ APP SHELL ══════════════════════ */
+  #appShell { display: none; min-height: 100vh; }
+  #appShell.active { display: flex; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 260px; min-height: 100vh;
+    background: var(--green-900);
+    display: flex; flex-direction: column;
+    position: fixed; left: 0; top: 0; bottom: 0; z-index: 100;
+    overflow: hidden;
+  }
+  .sidebar::before {
+    content: '';
+    position: absolute; bottom: -60px; left: -60px;
+    width: 280px; height: 280px;
+    background: radial-gradient(circle, rgba(34,160,91,.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .sidebar-head {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+  .sidebar-logo { display: flex; align-items: center; gap: 12px; }
+  .sidebar-logo-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: var(--green-600); display: flex; align-items: center; justify-content: center;
+  }
+  .sidebar-logo-name { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--white); }
+  .sidebar-logo-tag { font-size: .65rem; color: rgba(255,255,255,.4); letter-spacing: .08em; text-transform: uppercase; }
+
+  .sidebar-user {
+    padding: 16px 24px; margin: 12px 16px;
+    background: rgba(255,255,255,.06); border-radius: 8px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .user-avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--green-600); display: flex; align-items: center; justify-content: center;
+    font-size: .85rem; font-weight: 700; color: var(--white); flex-shrink: 0;
+  }
+  .user-name { font-size: .88rem; font-weight: 600; color: var(--white); }
+  .user-role { font-size: .72rem; color: rgba(255,255,255,.45); }
+
+  .sidebar-nav { flex: 1; padding: 8px 16px; }
+  .nav-section-label {
+    font-size: .65rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+    color: rgba(255,255,255,.3); padding: 16px 12px 8px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px; border-radius: 8px;
+    color: rgba(255,255,255,.6); font-size: .88rem; font-weight: 500;
+    cursor: pointer; transition: all .18s; margin-bottom: 2px;
+    text-decoration: none;
+  }
+  .nav-item:hover { background: rgba(255,255,255,.07); color: var(--white); }
+  .nav-item.active { background: var(--green-700); color: var(--white); }
+  .nav-item svg { flex-shrink: 0; opacity: .8; }
+  .nav-item.active svg { opacity: 1; }
+
+  .sidebar-footer { padding: 16px; border-top: 1px solid rgba(255,255,255,.06); }
+  .btn-logout {
+    width: 100%; padding: 10px 14px;
+    background: rgba(217,64,64,.12); color: #f87171;
+    border: 1px solid rgba(217,64,64,.2); border-radius: 8px;
+    font-family: 'DM Sans', sans-serif; font-size: .85rem; font-weight: 600;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background .2s;
+  }
+  .btn-logout:hover { background: rgba(217,64,64,.2); }
+
+  /* ── MAIN CONTENT ── */
+  .main-content { margin-left: 260px; flex: 1; display: flex; flex-direction: column; }
+
+  .topbar {
+    height: 68px; background: var(--white); border-bottom: 1px solid var(--grey-100);
+    padding: 0 36px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 50;
+    box-shadow: var(--shadow-sm);
+  }
+  .topbar-title { font-family: 'DM Serif Display', serif; font-size: 1.25rem; color: var(--green-900); }
+  .topbar-breadcrumb { font-size: .78rem; color: var(--grey-400); margin-top: 2px; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .topbar-date { font-size: .82rem; color: var(--grey-400); }
+
+  .page-body { padding: 36px; flex: 1; }
+
+  /* ══════════════════════ DASHBOARD ══════════════════════ */
+  #dashPage { display: none; }
+  #dashPage.active { display: block; }
+
+  .dash-welcome { margin-bottom: 32px; }
+  .dash-welcome h2 { font-family: 'DM Serif Display', serif; font-size: 1.9rem; color: var(--green-900); }
+  .dash-welcome p { color: var(--grey-400); font-size: .9rem; margin-top: 4px; }
+
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 20px; margin-bottom: 36px; }
+
+  .stat-card {
+    background: var(--white); border-radius: var(--radius);
+    padding: 24px; box-shadow: var(--shadow-sm);
+    border: 1px solid var(--grey-100);
+    position: relative; overflow: hidden;
+    transition: box-shadow .2s, transform .2s;
+  }
+  .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .stat-card::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--card-accent, var(--green-500));
+    border-radius: 3px 3px 0 0;
+  }
+  .stat-card.total  { --card-accent: var(--green-500); }
+  .stat-card.pending{ --card-accent: var(--amber-500); }
+  .stat-card.approved{ --card-accent: var(--green-400); }
+  .stat-card.rejected{ --card-accent: var(--red-500); }
+
+  .card-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 16px;
+  }
+  .stat-card.total .card-icon   { background: var(--green-50); }
+  .stat-card.pending .card-icon { background: var(--amber-100); }
+  .stat-card.approved .card-icon{ background: var(--green-50); }
+  .stat-card.rejected .card-icon{ background: var(--red-100); }
+
+  .card-label { font-size: .78rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--grey-400); margin-bottom: 6px; }
+  .card-value { font-family: 'DM Serif Display', serif; font-size: 2.4rem; color: var(--green-900); line-height: 1; }
+  .card-sub { font-size: .8rem; color: var(--grey-400); margin-top: 6px; }
+
+  .dash-recent { background: var(--white); border-radius: var(--radius); border: 1px solid var(--grey-100); box-shadow: var(--shadow-sm); }
+  .section-header { padding: 20px 24px; border-bottom: 1px solid var(--grey-100); display: flex; align-items: center; justify-content: space-between; }
+  .section-title { font-weight: 600; font-size: .95rem; color: var(--green-900); }
+  .section-badge { font-size: .75rem; background: var(--green-50); color: var(--green-700); padding: 3px 10px; border-radius: 100px; font-weight: 600; }
+
+  .mini-table { width: 100%; border-collapse: collapse; }
+  .mini-table th { font-size: .72rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--grey-400); padding: 12px 24px; text-align: left; background: var(--grey-50); }
+  .mini-table td { padding: 13px 24px; font-size: .88rem; border-top: 1px solid var(--grey-100); color: var(--grey-800); }
+  .mini-table tr:hover td { background: var(--grey-50); }
+
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 100px; font-size: .75rem; font-weight: 600;
+  }
+  .status-pill.pending  { background: var(--amber-100); color: var(--amber-500); }
+  .status-pill.approved { background: var(--green-50);  color: var(--green-600); }
+  .status-pill.rejected { background: var(--red-100);   color: var(--red-500); }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  /* ══════════════════════ LOAN REQUESTS ══════════════════════ */
+  #loanPage { display: none; }
+  #loanPage.active { display: block; }
+
+  .toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .search-box {
+    position: relative; flex: 1; min-width: 220px; max-width: 380px;
+  }
+  .search-box input {
+    width: 100%; padding: 10px 14px 10px 40px;
+    border: 1.5px solid var(--grey-200); border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif; font-size: .9rem; background: var(--white);
+    outline: none; color: var(--grey-800);
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .search-box input:focus { border-color: var(--green-500); box-shadow: 0 0 0 3px rgba(34,160,91,.1); }
+  .search-icon {
+    position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+    color: var(--grey-400); pointer-events: none;
+  }
+  .result-count { font-size: .82rem; color: var(--grey-400); }
+
+  .btn-download-all {
+    padding: 10px 20px;
+    background: var(--green-700); color: var(--white);
+    border: none; border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif; font-size: .88rem; font-weight: 600;
+    cursor: pointer; display: flex; align-items: center; gap: 8px;
+    transition: background .2s, transform .15s, box-shadow .2s;
+    box-shadow: 0 2px 8px rgba(21,92,53,.25);
+    white-space: nowrap;
+  }
+  .btn-download-all:hover { background: var(--green-800); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(21,92,53,.35); }
+
+  .table-wrap { background: var(--white); border-radius: var(--radius); border: 1px solid var(--grey-100); box-shadow: var(--shadow-sm); overflow: hidden; }
+  .loan-table { width: 100%; border-collapse: collapse; }
+  .loan-table thead { background: var(--green-900); }
+  .loan-table th {
+    padding: 14px 20px; text-align: left;
+    font-size: .72rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+    color: rgba(255,255,255,.7);
+  }
+  .loan-table th:first-child { color: rgba(255,255,255,.45); }
+  .loan-table tbody tr { border-top: 1px solid var(--grey-100); transition: background .15s; }
+  .loan-table tbody tr:hover { background: var(--green-50); }
+  .loan-table td { padding: 14px 20px; font-size: .88rem; color: var(--grey-800); vertical-align: middle; }
+
+  .td-id { font-family: 'DM Serif Display', serif; font-size: 1rem; color: var(--green-700); }
+  .td-name { font-weight: 600; }
+  .td-loan { font-size: .82rem; background: var(--grey-100); color: var(--grey-600); padding: 3px 9px; border-radius: 5px; display: inline-block; font-weight: 600; }
+  .td-email { color: var(--grey-600); font-size: .84rem; }
+
+  .btn-dl-row {
+    padding: 6px 14px;
+    background: var(--white); color: var(--green-700);
+    border: 1.5px solid var(--green-200, #b2dfc4); border-radius: 7px;
+    font-family: 'DM Sans', sans-serif; font-size: .8rem; font-weight: 600;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+    transition: all .18s;
+  }
+  .btn-dl-row:hover { background: var(--green-700); color: var(--white); border-color: var(--green-700); }
+
+  .no-results { padding: 48px; text-align: center; color: var(--grey-400); font-size: .9rem; }
+
+  .table-footer { padding: 14px 20px; border-top: 1px solid var(--grey-100); background: var(--grey-50); font-size: .8rem; color: var(--grey-400); display: flex; align-items: center; justify-content: space-between; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .login-brand { display: none; }
+    .login-form-wrap { width: 100%; }
+    .sidebar { width: 220px; }
+    .main-content { margin-left: 220px; }
+  }
+  @media (max-width: 640px) {
+    .sidebar { transform: translateX(-100%); }
+    .main-content { margin-left: 0; }
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(16px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  .fade-up { animation: fadeUp .4s ease both; }
+  .fade-up-1 { animation-delay: .05s; }
+  .fade-up-2 { animation-delay: .1s; }
+  .fade-up-3 { animation-delay: .15s; }
+  .fade-up-4 { animation-delay: .2s; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ TOAST ═══════════════ -->
+<div id="toast">
+  <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke="#4ade80" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M20 6L9 17l-5-5"/></svg>
+  <span id="toastMsg">File downloaded successfully.</span>
+</div>
+
+<!-- ═══════════════ LOGIN PAGE ═══════════════ -->
+<div id="loginPage">
+  <div class="login-brand">
+    <div class="brand-badge"><span class="brand-dot"></span>Secure Banking Portal</div>
+    <h1>Loan Request<br><em>Management</em><br>System</h1>
+    <p>A centralised portal for reviewing, approving, and exporting loan application records — built for operational efficiency.</p>
+    <div class="brand-stats">
+      <div class="stat-item">
+        <div class="stat-value">12</div>
+        <div class="stat-label">Active Requests</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">98%</div>
+        <div class="stat-label">Uptime</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">RPA</div>
+        <div class="stat-label">Ready</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="login-form-wrap">
+    <div class="form-logo">
+      <div class="form-logo-icon">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><polyline stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <div>
+        <div class="form-logo-text">LoanVault</div>
+        <div class="form-logo-sub">Banking Operations</div>
+      </div>
+    </div>
+
+    <h2>Welcome back</h2>
+    <p class="login-subtitle">Sign in to access the loan management dashboard.</p>
+
+    <div class="login-hint">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10" stroke="#15803d" stroke-width="2"/><path d="M12 8v4m0 4h.01" stroke="#15803d" stroke-width="2" stroke-linecap="round"/></svg>
+      Demo credentials — Username: <strong style="margin:0 3px">admin</strong> · Password: <strong style="margin-left:3px">admin123</strong>
+    </div>
+
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="Enter your username" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="Enter your password" autocomplete="current-password">
+      <div class="error-msg" id="loginErr">Invalid username or password. Please try again.</div>
+    </div>
+
+    <button class="btn-primary" onclick="doLogin()">Sign In to Portal</button>
+  </div>
+</div>
+
+<!-- ═══════════════ APP SHELL ═══════════════ -->
+<div id="appShell">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-head">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><polyline stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <div>
+          <div class="sidebar-logo-name">LoanVault</div>
+          <div class="sidebar-logo-tag">Banking Portal</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sidebarAvatar">A</div>
+      <div>
+        <div class="user-name" id="sidebarName">Admin</div>
+        <div class="user-role">Loan Officer</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main Menu</div>
+      <a class="nav-item active" id="navDash" onclick="showPage('dash')">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/></svg>
+        Dashboard
+      </a>
+      <a class="nav-item" id="navLoans" onclick="showPage('loans')">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><polyline stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="14 2 14 8 20 8"/><line stroke="currentColor" stroke-width="2" stroke-linecap="round" x1="8" y1="13" x2="16" y2="13"/><line stroke="currentColor" stroke-width="2" stroke-linecap="round" x1="8" y1="17" x2="13" y2="17"/></svg>
+        Loan Requests
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="doLogout()">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <header class="topbar">
+      <div>
+        <div class="topbar-title" id="pageTitle">Dashboard</div>
+        <div class="topbar-breadcrumb" id="pageCrumb">LoanVault / Dashboard</div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-date" id="topbarDate"></div>
+      </div>
+    </header>
+
+    <div class="page-body">
+
+      <!-- ──── DASHBOARD PAGE ──── -->
+      <div id="dashPage">
+        <div class="dash-welcome fade-up">
+          <h2>Good morning, Admin 👋</h2>
+          <p>Here's a summary of all loan requests in the system.</p>
+        </div>
+
+        <div class="cards-grid">
+          <div class="stat-card total fade-up fade-up-1">
+            <div class="card-icon">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="#1a7843" stroke-width="2" stroke-linecap="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4" stroke="#1a7843" stroke-width="2"/><path stroke="#1a7843" stroke-width="2" stroke-linecap="round" d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+            </div>
+            <div class="card-label">Total Requests</div>
+            <div class="card-value" id="cTotal">0</div>
+            <div class="card-sub">All loan applications</div>
+          </div>
+          <div class="stat-card pending fade-up fade-up-2">
+            <div class="card-icon">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="#d97706" stroke-width="2"/><polyline stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div class="card-label">Pending</div>
+            <div class="card-value" id="cPending">0</div>
+            <div class="card-sub">Awaiting review</div>
+          </div>
+          <div class="stat-card approved fade-up fade-up-3">
+            <div class="card-icon">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="#22a05b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M20 6L9 17l-5-5"/></svg>
+            </div>
+            <div class="card-label">Approved</div>
+            <div class="card-value" id="cApproved">0</div>
+            <div class="card-sub">Loans approved</div>
+          </div>
+          <div class="stat-card rejected fade-up fade-up-4">
+            <div class="card-icon">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="#d94040" stroke-width="2"/><line stroke="#d94040" stroke-width="2" stroke-linecap="round" x1="15" y1="9" x2="9" y2="15"/><line stroke="#d94040" stroke-width="2" stroke-linecap="round" x1="9" y1="9" x2="15" y2="15"/></svg>
+            </div>
+            <div class="card-label">Rejected</div>
+            <div class="card-value" id="cRejected">0</div>
+            <div class="card-sub">Declined applications</div>
+          </div>
+        </div>
+
+        <div class="dash-recent fade-up">
+          <div class="section-header">
+            <span class="section-title">Recent Loan Requests</span>
+            <span class="section-badge" id="recentBadge">5 Records</span>
+          </div>
+          <table class="mini-table">
+            <thead>
+              <tr>
+                <th>Request ID</th>
+                <th>Customer Name</th>
+                <th>Loan ID</th>
+                <th>Email</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="recentBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ──── LOANS PAGE ──── -->
+      <div id="loanPage">
+        <div class="toolbar">
+          <div class="search-box">
+            <span class="search-icon">
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
+            </span>
+            <input type="text" id="searchInput" placeholder="Search by name or Loan ID…" oninput="filterTable()">
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <span class="result-count" id="resultCount">Showing 12 of 12</span>
+            <button class="btn-download-all" onclick="downloadAll()">
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              Download All CSV
+            </button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="loan-table">
+            <thead>
+              <tr>
+                <th>Request ID</th>
+                <th>Customer Name</th>
+                <th>Loan ID</th>
+                <th>Email</th>
+                <th style="text-align:center">Action</th>
+              </tr>
+            </thead>
+            <tbody id="loanTableBody"></tbody>
+          </table>
+          <div id="noResults" class="no-results" style="display:none">
+            <svg width="40" height="40" fill="none" viewBox="0 0 24 24" style="margin:0 auto 12px;display:block;opacity:.3"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.5"/><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
+            No records match your search.
+          </div>
+          <div class="table-footer">
+            <span id="tableFooterInfo">12 total records</span>
+            <span>CSV · UTF-8 Encoded · RPA Ready</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-body -->
+  </main>
+</div><!-- /appShell -->
+
+<script>
+/* ══════════════════════════════════════════
+   STATIC DATA
+══════════════════════════════════════════ */
+const loanData = [
+  { RequestID: 1001, CustomerName: "Fatima Siddiqui",  LoanID: "UBL-10002", Email: "fatima.siddiqui@gmail.com",  Status: "Approved"  },
+  { RequestID: 1002, CustomerName: "Ayesha Raza",      LoanID: "UBL-10004", Email: "ayesha.raza2@gmail.com",    Status: "Pending"   },
+  { RequestID: 1003, CustomerName: "Hassan Mirza",     LoanID: "HBL-20011", Email: "hassan.mirza@outlook.com",  Status: "Approved"  },
+  { RequestID: 1004, CustomerName: "Sara Khan",        LoanID: "MCB-30007", Email: "sara.khan99@yahoo.com",     Status: "Rejected"  },
+  { RequestID: 1005, CustomerName: "Bilal Ahmed",      LoanID: "ABL-40019", Email: "bilal.ahmed@gmail.com",     Status: "Pending"   },
+  { RequestID: 1006, CustomerName: "Nadia Rehman",     LoanID: "HBL-20015", Email: "nadia.rehman@gmail.com",    Status: "Approved"  },
+  { RequestID: 1007, CustomerName: "Omar Sheikh",      LoanID: "UBL-10008", Email: "omar.sheikh@hotmail.com",   Status: "Pending"   },
+  { RequestID: 1008, CustomerName: "Zara Qureshi",     LoanID: "MCB-30022", Email: "zara.qureshi@gmail.com",    Status: "Rejected"  },
+  { RequestID: 1009, CustomerName: "Ali Hassan",       LoanID: "ABL-40025", Email: "ali.hassan44@gmail.com",    Status: "Approved"  },
+  { RequestID: 1010, CustomerName: "Maryam Baig",      LoanID: "UBL-10031", Email: "maryam.baig@outlook.com",   Status: "Pending"   },
+  { RequestID: 1011, CustomerName: "Usman Tariq",      LoanID: "HBL-20039", Email: "usman.tariq@gmail.com",     Status: "Rejected"  },
+  { RequestID: 1012, CustomerName: "Sana Malik",       LoanID: "MCB-30045", Email: "sana.malik12@yahoo.com",    Status: "Approved"  },
+];
+
+/* ══════════════════════════════════════════
+   UTILITIES
+══════════════════════════════════════════ */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+function csvRow(r) {
+  return `${r.RequestID},${r.CustomerName},${r.LoanID},${r.Email}`;
+}
+
+function downloadCSV(rows, filename) {
+  const header = 'RequestID,CustomerName,LoanID,Email';
+  const body   = rows.map(csvRow).join('\n');
+  const blob   = new Blob(['\uFEFF' + header + '\n' + body], { type: 'text/csv;charset=utf-8;' });
+  const url    = URL.createObjectURL(blob);
+  const a      = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(`"${filename}" downloaded successfully.`);
+}
+
+/* ══════════════════════════════════════════
+   DATE
+══════════════════════════════════════════ */
+function setDate() {
+  const d = new Date();
+  document.getElementById('topbarDate').textContent =
+    d.toLocaleDateString('en-PK', { weekday:'short', year:'numeric', month:'short', day:'numeric' });
+}
+
+/* ══════════════════════════════════════════
+   AUTH
+══════════════════════════════════════════ */
+function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value.trim();
+  const err = document.getElementById('loginErr');
+  const ui  = document.getElementById('loginUser');
+  const pi  = document.getElementById('loginPass');
+
+  if (u === 'admin' && p === 'admin123') {
+    err.classList.remove('show');
+    ui.classList.remove('error'); pi.classList.remove('error');
+    localStorage.setItem('lv_auth', JSON.stringify({ user: u, ts: Date.now() }));
+    enterApp(u);
+  } else {
+    err.classList.add('show');
+    ui.classList.add('error'); pi.classList.add('error');
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem('lv_auth');
+  document.getElementById('appShell').classList.remove('active');
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+function enterApp(user) {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('appShell').classList.add('active');
+  const av = user.charAt(0).toUpperCase();
+  document.getElementById('sidebarAvatar').textContent = av;
+  document.getElementById('sidebarName').textContent = user.charAt(0).toUpperCase() + user.slice(1);
+  setDate();
+  showPage('dash');
+}
+
+/* ══════════════════════════════════════════
+   PAGE NAVIGATION
+══════════════════════════════════════════ */
+function showPage(page) {
+  ['dash','loans'].forEach(p => {
+    document.getElementById(p === 'dash' ? 'dashPage' : 'loanPage').classList.remove('active');
+    document.getElementById(p === 'dash' ? 'navDash'  : 'navLoans').classList.remove('active');
+  });
+
+  if (page === 'dash') {
+    document.getElementById('dashPage').classList.add('active');
+    document.getElementById('navDash').classList.add('active');
+    document.getElementById('pageTitle').textContent = 'Dashboard';
+    document.getElementById('pageCrumb').textContent = 'LoanVault / Dashboard';
+    buildDashboard();
+  } else {
+    document.getElementById('loanPage').classList.add('active');
+    document.getElementById('navLoans').classList.add('active');
+    document.getElementById('pageTitle').textContent = 'Loan Requests';
+    document.getElementById('pageCrumb').textContent = 'LoanVault / Loan Requests';
+    buildLoanTable(loanData);
+  }
+}
+
+/* ══════════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════════ */
+function buildDashboard() {
+  const total    = loanData.length;
+  const pending  = loanData.filter(r => r.Status === 'Pending').length;
+  const approved = loanData.filter(r => r.Status === 'Approved').length;
+  const rejected = loanData.filter(r => r.Status === 'Rejected').length;
+
+  animateCount('cTotal',    total);
+  animateCount('cPending',  pending);
+  animateCount('cApproved', approved);
+  animateCount('cRejected', rejected);
+
+  const recent = loanData.slice(0, 5);
+  document.getElementById('recentBadge').textContent = `${recent.length} Records`;
+  const tbody = document.getElementById('recentBody');
+  tbody.innerHTML = recent.map(r => `
+    <tr>
+      <td class="td-id">#${r.RequestID}</td>
+      <td class="td-name">${r.CustomerName}</td>
+      <td><span class="td-loan">${r.LoanID}</span></td>
+      <td class="td-email">${r.Email}</td>
+      <td><span class="status-pill ${r.Status.toLowerCase()}"><span class="status-dot"></span>${r.Status}</span></td>
+    </tr>
+  `).join('');
+}
+
+function animateCount(id, target) {
+  const el = document.getElementById(id);
+  let cur = 0;
+  const step = Math.ceil(target / 20);
+  const t = setInterval(() => {
+    cur = Math.min(cur + step, target);
+    el.textContent = cur;
+    if (cur >= target) clearInterval(t);
+  }, 40);
+}
+
+/* ══════════════════════════════════════════
+   LOAN TABLE
+══════════════════════════════════════════ */
+function buildLoanTable(data) {
+  const tbody = document.getElementById('loanTableBody');
+  if (data.length === 0) {
+    tbody.innerHTML = '';
+    document.getElementById('noResults').style.display = 'block';
+    document.getElementById('resultCount').textContent = 'No results';
+    return;
+  }
+  document.getElementById('noResults').style.display = 'none';
+  document.getElementById('resultCount').textContent = `Showing ${data.length} of ${loanData.length}`;
+  document.getElementById('tableFooterInfo').textContent = `${data.length} record${data.length !== 1 ? 's' : ''} displayed`;
+
+  tbody.innerHTML = data.map(r => `
+    <tr>
+      <td class="td-id">#${r.RequestID}</td>
+      <td class="td-name">${r.CustomerName}</td>
+      <td><span class="td-loan">${r.LoanID}</span></td>
+      <td class="td-email">${r.Email}</td>
+      <td style="text-align:center">
+        <button class="btn-dl-row" onclick='downloadRow(${JSON.stringify(r)})'>
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          CSV
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filterTable() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const filtered = loanData.filter(r =>
+    r.CustomerName.toLowerCase().includes(q) ||
+    r.LoanID.toLowerCase().includes(q)
+  );
+  buildLoanTable(filtered);
+}
+
+function downloadAll() {
+  downloadCSV(loanData, 'LoanRequests_All.csv');
+}
+
+function downloadRow(r) {
+  downloadCSV([r], `LoanRequest_${r.RequestID}.csv`);
+}
+
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+(function init() {
+  // Enter key on login
+  ['loginUser','loginPass'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  });
+
+  // Check saved session
+  const session = localStorage.getItem('lv_auth');
+  if (session) {
+    try {
+      const { user } = JSON.parse(session);
+      enterApp(user);
+    } catch { localStorage.removeItem('lv_auth'); }
+  }
+})();
+</script>
+</body>
+</html>
